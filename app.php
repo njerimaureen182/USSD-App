@@ -4,6 +4,7 @@ if (!empty($_POST)) {
     require_once("include/db.php");
     require_once("api/api.php");
     require_once("include/accountconfig.php");
+    require_once("include/functions.php");
 
     # api parameters
     $sessionId = $_POST['sessionId'];
@@ -20,83 +21,46 @@ if (!empty($_POST)) {
     $sessionQueryArr = $sessionQuery->fetch_assoc();
 
     if ($sessionQueryArr['session_id']==NULL) {
+
+        # serve main menu if session id is null and update the db query with the second command
+        $response = mainMenu();
+
+        $sql1="UPDATE `sessions` SET `command`='.firstMenu.', `session_id`='.$sessionId.' WHERE 
+        phone='.$phoneNumber.'";
+
+        $database->query($sql1);
+
+    } elseif ($sessionQueryArr['session_id'] && $sessionQueryArr['command']=='firstMenu') {
         
-        function menu(){
-            # serve menu
-            $response = "CON Karibu. Please make your selection\n.";
-            $response .= "1. Get today's notes.\n";
-            $response .= "2. Upload my assignments.\n";
-            $response .= "3. How to do my projects.\n";
+        # serve first menu and update db query with second command
+        $response = firstMenu();
 
-            return $response;
-        }
+        $sql2 = "UPDATE `sessions` SET `command`='.secondMenu.' WHERE `phone`='.$phoneNumber.'";
 
-        echo menu();
+        $database->query($sql2);
 
-        function responseOne(){
-            
-            $commandOne = 'getNotes';
 
-            # if session_id is found, update db accordingly and serve response to menu option 1
-            if ($sessionQueryArr['session_id']) {
+    } elseif ($sessionQueryArr['session_id'] && $sessionQueryArr['command']=='secondMenu') {
+        
+        # serve second menu and update db query with third command
+        $response = secondMenu();
 
-                $sql2 = "UPDATE `sessions` SET `session_id`='.$sessionId.', `command`='.$commandOne.' WHERE 
-                `phone`='.$phoneNumber.'";
+        $sql3 = "UPDATE `sessions` SET `command`=.thirdMenu. WHERE `phone`='.$phoneNumber.'";
 
-                # query db
-                $database->query($sql2);
+        $database->query($sql3);
 
-                $link = "http://gearbox.co.ke/notes";
-             
-                $response = "END Log onto " .$link. " to get today's lesson.\n ";
-            }
+    } elseif ($sessionQueryArr['session_id'] && $sessionQueryArr['command']=='thirdMenu') {
+        
+        # serve third menu and update db query with third command
+        $response = thirdMenu();
 
-            return $response;
-        }
-
-        echo responseOne();
-
-        function responseTwo(){
-
-            $commandTwo = "uploadProject";
-
-            if ($sessionQueryArr['session_id']) {
-                
-                $sql3 = "UPDATE `sessions` SET `session_id`='.$sessionId.', `command`='.$commandTwo.' WHERE 
-                `phone`='.$phoneNumber.'";
-
-                $database->query($sql3);
-
-                # serve response to the 2nd menu option
-                $link2 = "docs.google.com/upload";
-                $response = "END Please visit " .$link2. " to upload your projects";
-            }
-            return $response;
-        }
-        echo responseTwo();
-
-        function responseThree(){
-
-            $commandThree = 'guidelines';
-
-            if ($sessionQueryArr['session_id']) {
-                
-                $sql4 = "UPDATE `sessions` SET `session_id`='.$sessionId.', `command`='.$commandThree.' WHERE 
-                `phone`='.$phoneNumber.'";
-
-                $database->query($sql4);
-
-                # serve response to the 3rd menu option
-                $link3 = "http://guide.com/guidelines";
-                $response = "END Log on to " .$link3. " to get the guidelines on how to do your projects.\n";
-            }
-
-            return $response;
-
-        }
-        echo responseThree();
-
+    } else {
+        
+        # I'll try to clearly understand the essence of $response=&call_user_func('.$command.'). 
     }
+
+    echo $response;
+
 
 
 
