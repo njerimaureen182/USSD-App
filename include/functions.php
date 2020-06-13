@@ -2,7 +2,7 @@
 
 function mainMenu(){
     # serve menu
-    $response = "CON Karibu. Please make your selection\n.";
+    $response = "CON Karibu. Please make your selection\nu";
     $response .= "1. Get today's notes.\n";
     $response .= "2. Upload my assignments.\n";
     $response .= "3. How to do my projects.\n";

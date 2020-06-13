@@ -17,8 +17,9 @@ if (!empty($_POST)) {
     # check for session_id
     $sql1 = "SELECT `session_id` FROM `sessions` WHERE `phone`='.$phoneNumber.'";
 
-    $sessionQuery = $database->query($sql1);
-    $sessionQueryArr = $sessionQuery->fetch_assoc();
+    $sessionQuery = $dbh->query($sql1);
+    $sessionQueryArr = $sessionQuery->fetch(PDO::FETCH_ASSOC);
+    // $result = $sth->fetch(PDO::FETCH_ASSOC);
 
     if ($sessionQueryArr['session_id']==NULL) {
 
@@ -28,7 +29,7 @@ if (!empty($_POST)) {
         $sql1="UPDATE `sessions` SET `command`='.firstMenu.', `session_id`='.$sessionId.' WHERE 
         phone='.$phoneNumber.'";
 
-        $database->query($sql1);
+        $dbh->query($sql1);
 
     } elseif ($sessionQueryArr['session_id'] && $sessionQueryArr['command']=='firstMenu') {
         
@@ -37,7 +38,7 @@ if (!empty($_POST)) {
 
         $sql2 = "UPDATE `sessions` SET `command`='.secondMenu.' WHERE `phone`='.$phoneNumber.'";
 
-        $database->query($sql2);
+        $dbh->query($sql2);
 
 
     } elseif ($sessionQueryArr['session_id'] && $sessionQueryArr['command']=='secondMenu') {
@@ -47,7 +48,7 @@ if (!empty($_POST)) {
 
         $sql3 = "UPDATE `sessions` SET `command`=.thirdMenu. WHERE `phone`='.$phoneNumber.'";
 
-        $database->query($sql3);
+        $dbh->query($sql3);
 
     } elseif ($sessionQueryArr['session_id'] && $sessionQueryArr['command']=='thirdMenu') {
         
