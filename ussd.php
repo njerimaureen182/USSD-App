@@ -7,156 +7,207 @@ if (!empty($_POST)) {
     require_once("include/functions.php");
 
     # api parameters
-    $sessionId = $_POST['sessionId'];
-    $serviceCode = $_POST['serviceCode'];
-    $phoneNumber = $_POST['phoneNumber'];
-    $text = $_POST['text'];
+    $sessionId=$_POST['sessionId'];
+    $serviceCode=$_POST['serviceCode'];
+    $phoneNumber=$_POST['phoneNumber'];
+    $text=$_POST['text'];
 
-    $textExploded = explode('*', $text);
+    $textExploded=explode('*', $text);
 
-    # check for session_id
-    $sql1 = "SELECT `session_id` FROM `sessions` WHERE `phone`='.$phoneNumber.'";
+    $userInput=trim(end($textExploded));
 
-    $sessionQuery = $dbh->query($sql1);
-    $sessionQueryArr = $sessionQuery->fetch(PDO::FETCH_ASSOC);
-    // $result = $sth->fetch(PDO::FETCH_ASSOC);
+    $level= 0;
 
-    if ($sessionQueryArr['session_id']==NULL) {
+    # check user level from database. retain default level if none is found
+    $sql="SELECT `level` FROM `sessions` WHERE `session_id`='".$sessionId."'";
+    
+    # query above sql stmt
+    $levelQuery=$pdo->query($sql);
 
-        # serve main menu if session id is null and update the db query with the second command
-        $response = mainMenu();
-
-        $sql1="UPDATE `sessions` SET `command`='.firstMenu.', `session_id`='.$sessionId.' WHERE 
-        phone='.$phoneNumber.'";
-
-        $dbh->query($sql1);
-
-    } elseif ($sessionQueryArr['session_id'] && $sessionQueryArr['command']=='firstMenu') {
+    if ($result=$levelQuery->fetch(PDO::FETCH_ASSOC)) {
         
-        # serve first menu and update db query with second command
-        $response = firstMenu();
-
-        $sql2 = "UPDATE `sessions` SET `command`='.secondMenu.' WHERE `phone`='.$phoneNumber.'";
-
-        $dbh->query($sql2);
-
-
-    } elseif ($sessionQueryArr['session_id'] && $sessionQueryArr['command']=='secondMenu') {
-        
-        # serve second menu and update db query with third command
-        $response = secondMenu();
-
-        $sql3 = "UPDATE `sessions` SET `command`=.thirdMenu. WHERE `phone`='.$phoneNumber.'";
-
-        $dbh->query($sql3);
-
-    } elseif ($sessionQueryArr['session_id'] && $sessionQueryArr['command']=='thirdMenu') {
-        
-        # serve third menu and update db query with third command
-        $response = thirdMenu();
-
-    } else {
-        
-        # I'll try to clearly understand the essence of $response=&call_user_func('.$command.'). 
+        $level=$result['level'];
     }
 
-    echo $response;
+    if ($result) {
+        
+        $level=$result['level'];
+    }
+
+    # check if there's an ongoing session
+    $sql1="SELECT * FROM `sessions` WHERE `session_id`='".$sessionId."'";
+
+    # query the above sql stmt
+    $sessionQuery=$pdo->query($sql1);
+
+    $sessionQueryArr=$sessionQuery->fetch(PDO::FETCH_ASSOC);
 
 
+    if(empty($sessionQueryArr['session_id'])) {
+        
+        switch ($userInput) {
+            case '': # *384*48529#
 
+                if ($level==0) {
 
+                    $sql2="INSERT INTO `sessions`(`session_id`,`phone`,`level`) VALUES('".$sessionId."', 
+                    '".$phoneNumber."',1)";
 
-
-    // function menu(){
-
-    //     $sql1 = "SELECT `session_id` FROM `sessions` WHERE `phone`='.$phoneNumber.'";
-
-    //     $sessionQuery = $database->query($sql1);
-
-    //     $sessionQueryArr = $sessionQuery->fetch_assoc();
-
-    //     if ($sessionQueryArr['session_id']==NULL) {
+                    $pdo->query($sql2);
             
-    //         $sql2 = "INSERT INTO `sessions`(`phone`,`session_id`,`commands`) VALUES('.$phoneNumber.','.$sessionId.', 'get notes')";
 
-    //         # serve menu
-    //         $response = "CON Karibu. Please make your selection\n.";
-    //         $response .= "1. Get today's notes.\n";
-    //         $response .= "2. Upload my assignments.\n";
-    //         $response .= "3. How to do my projects.\n";
+                    #serve main menu
+                    // $response = mainMenu();
 
-    //         header('Content-type: text/plain');
-    //         echo $response;
-    //     }
-    // }
+                    header('Content-type:text/plain');
 
-    // function responseOne(){
-    //     $sql2 = "SELECT * FROM `sessions` WHERE `command`='get notes'";
+                    echo mainMenu();
+                }
+                break;
+        }
 
-    //     $dbQueryTwo = $database->query($sql2);
+    }else {
 
-    //     if ($dbQueryTwo['command']) {
+        if ($level==1) {
             
-    //         $link = "http://gearbox.co.ke/notes";
-    //         $response = "END Log onto " .$link. " to get today's lesson.\n";
+            switch ($userInput) {
 
-    //         header('Content-type: text/plain');
-    //         echo $response;
+                case '1': # *384*48529*1#
+                
+                    // if ($level==1) {
 
-    //     }else {
-    //         $response = "END Something went wrong. Please try again later.\n";
+                        #serve response to option 1
+                        echo firstMenu();
 
-    //         header('Content-type: text/plain');
-    //         echo $response;
-    //     }
-    // }
+                        header('Content-type:text/plain');
 
-    // function responseTwo(){
-    //     $sql3 = "UPDATE `sessions` SET `command`='upload assignments'";
+                    // }
 
-    //     $dbQueryThree = $database->query($sql3);
-
-    //     if ($dbQueryThree['command']==true) {
+                    break;
             
-    //         $link2 = "docs.google.com/upload";
+                case '2': # *384*48529*2#
+                    
+                    // if ($level==1) {
+                        # serve response to option 2
+                        echo secondMenu();
 
-    //         $response = "END Please visit " .$link2. " to upload your projects";
+                        header('Content-type:text/plain');
+   
+                    // }
+                    break;
 
-    //         header('Content-type: text/plain');
-    //         echo $response;
+                case '3': # *384*48529*3#
+                    
+                    // if ($level==1) {
+                        # serve response to option 3
+                        echo thirdMenu();
 
-    //     }else {
+                        header('Content-type:text/plain');
 
-    //         $response = "END Something went wrong. Please try again later.\n";
+                    // }
+                    break;
 
-    //         header('Content-type: text/plain');
-    //         echo $response;
-    //     }
+                default:
 
-    // }
- 
-    // function responseThree(){
+                    if ($userInput=='') {
 
-    //     $sql4 = "UPDATE `sessions` SET `command`='project guide'";
+                        # if a user does not choose a service, demote level and take them back to the main menu
+                        $response = "CON You have to make a selection.\n";
+                        $response .= "To go back, press 0";
 
-    //     $dbQueryFour = $database->query($sql4);
+                        $sql3 = "UPDATE `sessions` SET `level`=0 WHERE `session_id`='".$sessionId."'";
 
-    //     if ($dbQueryFour['command']==true) {
+                        $pdo->query($sql3);
+
+                        echo $response; 
+
+                        header('Content-type:text/plain');
+                    }
+                    break;
+            }
+
+        }
+
+    }
             
-    //         $email = "maureen@mail.com";
-    //         $response = "END Email " .$email. " to inquire how to do your projects.\n";
+                
+                
+        
+    
 
-    //         header('Content-type: text/plain');
-    //         echo $response;
 
-    //     }else {
-            
-    //         $response = "END Something went wrong. Please try again later.\n";
 
-    //         header('Content-type: text/plain');
-    //         echo $response;
 
-    //     }
+
+
+
+
+
+
+
+
+
+    # check for session_id"
+    // $sql = "SELECT `session_id` FROM `sessions` WHERE `phone` LIKE '%".$phoneNumber."%'";
+    // $sql = "SELECT * FROM `sessions` WHERE `session_id`='".$sessionId."' AND `phone` LIKE'%".$phoneNumber."%'"; 
+
+    // print_r($sql1);
+
+    // $sessionQuery = $dbh->query($sql);
+    // $sessionQueryArr = $sessionQuery->fetch(PDO::FETCH_ASSOC);
+   
+
+    // if ($sessionQueryArr['session_id']==NULL) {
+
+    //     # serve main menu if session id is null and update the db query with the second command
+    //     $response = mainMenu();
+
+    //     // echo $response;
+
+    //     // $sql1="UPDATE `sessions` SET `command`='firstMenu', `session_id`=$sessionId WHERE phone=$phoneNumber";
+    //     // $sql1="UPDATE `sessions` SET `text`=1, `session_id`='.$sessionId.' WHERE phone='.$phoneNumber.'";
+
+    //     $sql1="INSERT INTO `sessions`(`session_id`, `phone`, `level`) VALUES('".$sessionId."', '".$phoneNumber."', 1)";
+    //     // print_r($sql1);
+
+    //     $dbh->query($sql1);
+
+    // } elseif ($sessionQueryArr['session_id'] && $sessionQueryArr['level']==1) {
+        
+    //     # serve first menu and update db query with second command
+    //     $response = firstMenu();
+    //     echo $response;
+
+
+    //     $sql2 = "UPDATE `sessions` SET `session_id`='".$sessionId."', `level`=2 WHERE `phone` LIKE '%".$phoneNumber."%'";
+
+    //     $dbh->query($sql2);
+
+
+    // } elseif ($sessionQueryArr['session_id'] && $sessionQueryArr['level']==2) {
+        
+    //     # serve second menu and update db query with third command
+    //     $response = secondMenu();
+    //     echo $response;
+
+
+    //     $sql3 = "UPDATE `sessions` SET `session_id`='".$sessionId."', `level`=3 WHERE `phone` LIKE '%".$phoneNumber."%'";
+
+    //     $dbh->query($sql3);
+
+    // } elseif ($sessionQueryArr['session_id'] && $sessionQueryArr['level']==3) {
+        
+    //     # serve third menu and update db query with third command
+    //     $response = thirdMenu();
+
+    //     echo $response;
+
+    //     header('Content-type:text/plain');
+
+    // } 
+    // else {
+        
+    //     # I'll try to clearly understand the essence of $response=&call_user_func('.$command.'). 
     // }
     
 }
