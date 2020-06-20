@@ -1,6 +1,7 @@
 <?php
 
 if (!empty($_POST)) {
+    
     require_once("include/db.php");
     require_once("api/api.php");
     require_once("include/accountconfig.php");
@@ -12,203 +13,83 @@ if (!empty($_POST)) {
     $phoneNumber=$_POST['phoneNumber'];
     $text=$_POST['text'];
 
-    $textExploded=explode('*', $text);
+    $textExploded = explode('*', $text);
+    $userInput = trim(end($textExploded));
 
-    $userInput=trim(end($textExploded));
+    # check if session exists
+    $sql1 = "SELECT * FROM `sessions` WHERE `session_id`='".$sessionId."'"; 
 
-    $level= 0;
+    $sessionQuery = $pdo->query($sql1);
+    $sessionQueryArr = $sessionQuery->fetch(PDO::FETCH_ASSOC);
 
-    # check user level from database. retain default level if none is found
-    $sql="SELECT `level` FROM `sessions` WHERE `session_id`='".$sessionId."'";
-    
-    # query above sql stmt
-    $levelQuery=$pdo->query($sql);
-
-    if ($result=$levelQuery->fetch(PDO::FETCH_ASSOC)) {
-        
-        $level=$result['level'];
-    }
-
-    if ($result) {
-        
-        $level=$result['level'];
-    }
-
-    # check if there's an ongoing session
-    $sql1="SELECT * FROM `sessions` WHERE `session_id`='".$sessionId."'";
-
-    # query the above sql stmt
-    $sessionQuery=$pdo->query($sql1);
-
-    $sessionQueryArr=$sessionQuery->fetch(PDO::FETCH_ASSOC);
-
-
-    if(empty($sessionQueryArr['session_id'])) {
+    if (empty($sessionQueryArr['session_id'])) {
         
         switch ($userInput) {
-            case '': # *384*48529#
 
-                if ($level==0) {
+            case '': # *348*100# 
 
-                    $sql2="INSERT INTO `sessions`(`session_id`,`phone`,`level`) VALUES('".$sessionId."', 
-                    '".$phoneNumber."',1)";
+                $sql2 = "INSERT INTO `sessions`(`session_id`, `phone`,`command`) VALUES('".$sessionId."', '".$phoneNumber."', 'mainMenu')";
 
-                    $pdo->query($sql2);
-            
+                $pdo->query($sql2);
 
-                    #serve main menu
-                    // $response = mainMenu();
+                header('Content-type:text/plain');
 
-                    header('Content-type:text/plain');
+                mainMenu();
 
-                    echo mainMenu();
-                }
                 break;
-        }
 
-    }else {
+            case '1': # *348*100*1# 
 
-        if ($level==1) {
+                $sql3 = "UPDATE `sessions` SET `session_id`='".$sessionId."', `command`='firstMenu' WHERE `phone`='".$phoneNumber."' ";
+
+                $pdo->query($sql3);
+
+                firstMenu();
+
+                header('Content-type:text/plain');
+
+                break;
             
-            switch ($userInput) {
-
-                case '1': # *384*48529*1#
+            case '2': # *348*100*2# 
                 
-                    // if ($level==1) {
+                $sql4 = "UPDATE `sessions` SET `session_id`='".$sessionId."', `command`='secondMenu' WHERE `phone`='".$phoneNumber."' ";
 
-                        #serve response to option 1
-                        echo firstMenu();
+                $pdo->query($sql4);
 
-                        header('Content-type:text/plain');
+                // header('Content-type:text/plain');
 
-                    // }
+                // secondMenu();
 
-                    break;
+                break;
+
+            case '3': # *348*100*3# 
+
+                $sql5 = "UPDATE `sessions` SET `session_id`='".$sessionId."', `command`='thirdMenu' WHERE `phone`='".$phoneNumber."' ";
+
+                $pdo->query($sql5);
+
+                header('Content-type:text/plain');
+
+                thirdMenu();
+                
+                break;
+
+            default:
             
-                case '2': # *384*48529*2#
-                    
-                    // if ($level==1) {
-                        # serve response to option 2
-                        echo secondMenu();
-
-                        header('Content-type:text/plain');
-   
-                    // }
-                    break;
-
-                case '3': # *384*48529*3#
-                    
-                    // if ($level==1) {
-                        # serve response to option 3
-                        echo thirdMenu();
-
-                        header('Content-type:text/plain');
-
-                    // }
-                    break;
-
-                default:
-
-                    if ($userInput=='') {
-
-                        # if a user does not choose a service, demote level and take them back to the main menu
-                        $response = "CON You have to make a selection.\n";
-                        $response .= "To go back, press 0";
-
-                        $sql3 = "UPDATE `sessions` SET `level`=0 WHERE `session_id`='".$sessionId."'";
-
-                        $pdo->query($sql3);
-
-                        echo $response; 
-
-                        header('Content-type:text/plain');
-                    }
-                    break;
-            }
-
+	    	    $response = "CON You have to choose a service.\n";
+	    	    $response .= "Press 0 to go back.\n";
+            
+            break;
+            
         }
+        
+    }else {
+        
+        $command = $sessionQueryArr['command'];
+        call_user_func($command, array());
 
     }
-            
-                
-                
-        
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # check for session_id"
-    // $sql = "SELECT `session_id` FROM `sessions` WHERE `phone` LIKE '%".$phoneNumber."%'";
-    // $sql = "SELECT * FROM `sessions` WHERE `session_id`='".$sessionId."' AND `phone` LIKE'%".$phoneNumber."%'"; 
-
-    // print_r($sql1);
-
-    // $sessionQuery = $dbh->query($sql);
-    // $sessionQueryArr = $sessionQuery->fetch(PDO::FETCH_ASSOC);
-   
-
-    // if ($sessionQueryArr['session_id']==NULL) {
-
-    //     # serve main menu if session id is null and update the db query with the second command
-    //     $response = mainMenu();
-
-    //     // echo $response;
-
-    //     // $sql1="UPDATE `sessions` SET `command`='firstMenu', `session_id`=$sessionId WHERE phone=$phoneNumber";
-    //     // $sql1="UPDATE `sessions` SET `text`=1, `session_id`='.$sessionId.' WHERE phone='.$phoneNumber.'";
-
-    //     $sql1="INSERT INTO `sessions`(`session_id`, `phone`, `level`) VALUES('".$sessionId."', '".$phoneNumber."', 1)";
-    //     // print_r($sql1);
-
-    //     $dbh->query($sql1);
-
-    // } elseif ($sessionQueryArr['session_id'] && $sessionQueryArr['level']==1) {
-        
-    //     # serve first menu and update db query with second command
-    //     $response = firstMenu();
-    //     echo $response;
-
-
-    //     $sql2 = "UPDATE `sessions` SET `session_id`='".$sessionId."', `level`=2 WHERE `phone` LIKE '%".$phoneNumber."%'";
-
-    //     $dbh->query($sql2);
-
-
-    // } elseif ($sessionQueryArr['session_id'] && $sessionQueryArr['level']==2) {
-        
-    //     # serve second menu and update db query with third command
-    //     $response = secondMenu();
-    //     echo $response;
-
-
-    //     $sql3 = "UPDATE `sessions` SET `session_id`='".$sessionId."', `level`=3 WHERE `phone` LIKE '%".$phoneNumber."%'";
-
-    //     $dbh->query($sql3);
-
-    // } elseif ($sessionQueryArr['session_id'] && $sessionQueryArr['level']==3) {
-        
-    //     # serve third menu and update db query with third command
-    //     $response = thirdMenu();
-
-    //     echo $response;
-
-    //     header('Content-type:text/plain');
-
-    // } 
-    // else {
-        
-    //     # I'll try to clearly understand the essence of $response=&call_user_func('.$command.'). 
-    // }
-    
+  
 }
+
 ?>
