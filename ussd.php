@@ -74,12 +74,12 @@ if (!empty($_POST)) {
                 
                 break;
 
-            default:
+            // default:
             
-	    	    $response = "CON You have to choose a service.\n";
-	    	    $response .= "Press 0 to go back.\n";
+	    	//     $response = "CON You have to choose a service.\n";
+	    	//     $response .= "Press 0 to go back.\n";
             
-            break;
+            // break;
             
         }
         
