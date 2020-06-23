@@ -56,9 +56,9 @@ if (!empty($_POST)) {
 
                 $pdo->query($sql4);
 
-                // header('Content-type:text/plain');
+                header('Content-type:text/plain');
 
-                // secondMenu();
+                secondMenu();
 
                 break;
 
